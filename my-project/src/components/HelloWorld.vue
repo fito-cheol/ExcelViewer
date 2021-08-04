@@ -1,14 +1,17 @@
 <template>
   <div align="left" >
-    <input type="file" id="excelFile" @change="excelExport"/>
+    <form>
+      <input type='reset' @click="clear"/>
+      <br/>
+      <input type="file" id="excelFile" @change="excelExport"/>
+    </form>
     <br/>
-    <span> {{header}}</span> <br/>
-    <div v-for="(row,index) in rows" :key="index" >
-      <span> {{row}}</span> <br/>
+    <div v-for="(sheetName, index) in tabs" :key="'sheet'+index">
+      <h2> {{sheetName}}</h2>
+      <v-data-table :items="rows[sheetName]" :headers="headers[sheetName]" />
+      <hr>
     </div>
-    <button @click="clear"> Clear </button>
   </div>
-
 </template>
 
 <script>
@@ -17,31 +20,38 @@ export default {
   name: 'HelloWorld',
   data(){
     return{
-      header:"",
-      rows:[]
+      tabs:[],
+      headers: {},
+      rows: {}
     }
   },
   methods:{
     clear(){
-      this.header = "";
-      this.rows = [];
+      this.tabs=[]
+      this.headers = {};
+      this.rows = {};
     },
     excelExport(event){
       let input = event.target;
       let reader = new FileReader();
       reader.onload = function(){
+        this.clear()
         let fileData = reader.result;
         let wb = XLSX.read(fileData, {type : 'binary'});
+        this.tabs = wb.SheetNames
         wb.SheetNames.forEach(function(sheetName){
           const sheet = wb.Sheets[sheetName]
           const rowObj =XLSX.utils.sheet_to_json(sheet);
-          const header = this.get_header_row(sheet)
+          const headers = this.get_header_row(sheet)
 
-          console.log('Header:', header)
-          console.log('Rows:', rowObj)
-          this.header = header
-          this.rows = rowObj
+          // console.log('Header:', headers)
+          // console.log('Rows:', rowObj)
+          this.headers[sheetName] = headers.map(header => {return {value:header, text: header}})
+          this.rows[sheetName] = rowObj
         }.bind(this))
+        console.log('Tabs',this.tabs)
+        console.log('Headers',this.headers)
+        console.log('Rows', this.rows)
       }.bind(this);
       reader.readAsBinaryString(input.files[0]);
     },
