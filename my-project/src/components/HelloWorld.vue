@@ -1,5 +1,5 @@
 <template>
-  <div align="left" >
+  <div style="float:left" >
     <form>
       <input type='reset' @click="clear"/>
       <br/>
